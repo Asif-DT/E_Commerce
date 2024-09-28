@@ -183,4 +183,44 @@ router.post("/customer/checkout", auth("customer"), async (req, res) => {
   }
 });
 
+// Get all orders
+router.get("/all_orders", auth("admin"), async (req, res) => {
+  try {
+    // Fetch all orders and populate user and product details
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .populate("items.product", "name sellingPrice");
+
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// View Single Order Summary
+router.get("/order/:orderId", auth("customer"), async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId)
+      .populate("items.product")
+      .populate("user", "name email");
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Check if the order belongs to the user
+    if (order.user._id.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ error: "Unauthorized access to this order" });
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;
