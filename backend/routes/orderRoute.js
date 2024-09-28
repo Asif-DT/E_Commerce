@@ -2,6 +2,7 @@ const express = require("express");
 const Order = require("../models/Order");
 const auth = require("../middleware/authMiddleware");
 const Product = require("../models/Product");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -69,6 +70,43 @@ router.get("/admin/all_orders", auth("admin"), async (req, res) => {
     const orders = await Order.find().populate("user", "name email");
     res.json(orders);
   } catch (err) {
+    res.status(500).send("Server error");
+  }
+});
+
+// Add product to cart
+router.post("/customer/cart/add", auth("customer"), async (req, res) => {
+  const { productId, quantity } = req.body;
+
+  try {
+    // Find the user making the request
+    const user = await User.findById(req.user.id);
+
+    // Find the product to be added to the cart
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Check if product already exists in the cart
+    const cartItemIndex = user.cart.findIndex(
+      (item) => item.product.toString() === productId
+    );
+
+    if (cartItemIndex > -1) {
+      // If product exists in the cart, update the quantity
+      user.cart[cartItemIndex].quantity += quantity;
+    } else {
+      // If product doesn't exist, add it to the cart
+      user.cart.push({ product: productId, quantity });
+    }
+
+    // Save the updated user with the modified cart
+    await user.save();
+
+    res.json(user.cart);
+  } catch (err) {
+    console.error(err.message);
     res.status(500).send("Server error");
   }
 });
