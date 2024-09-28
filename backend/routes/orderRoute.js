@@ -111,4 +111,76 @@ router.post("/customer/cart/add", auth("customer"), async (req, res) => {
   }
 });
 
+// View Cart - Get the current cart items for the user
+router.get("/customer/cart", auth("customer"), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.product");
+    res.json(user.cart);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// Checkout and Place Order with Cash Payment
+router.post("/customer/checkout", auth("customer"), async (req, res) => {
+  try {
+    // Fetch the user's cart
+    const user = await User.findById(req.user.id).populate("cart.product");
+
+    // Check if cart is empty
+    if (user.cart.length === 0) {
+      return res.status(400).json({ error: "Your cart is empty!" });
+    }
+
+    // Calculate total price and check product availability
+    let totalPrice = 0;
+    for (const item of user.cart) {
+      const product = item.product;
+      const quantity = item.quantity;
+
+      // Check if product is still available and has enough stock
+      if (product.quantity < quantity) {
+        return res
+          .status(400)
+          .json({ error: `Insufficient stock for product: ${product.name}` });
+      }
+
+      totalPrice += product.sellingPrice * quantity;
+    }
+
+    // Create a new order
+    const newOrder = new Order({
+      user: req.user.id,
+      items: user.cart.map((item) => ({
+        product: item.product._id,
+        quantity: item.quantity,
+      })),
+      totalPrice,
+      status: "Pending", // Afttr implement payment gateway, we can change the status
+      paymentMethod: "Cash",
+    });
+
+    // Save the new order
+    await newOrder.save();
+
+    // Update product quantities in stock
+    for (const item of user.cart) {
+      const product = await Product.findById(item.product._id);
+      product.quantity -= item.quantity;
+      await product.save();
+    }
+
+    // Clear the user's cart
+    user.cart = [];
+    await user.save();
+
+    // Respond with the new order details
+    res.json(newOrder);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;
