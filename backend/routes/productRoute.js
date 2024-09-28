@@ -24,7 +24,6 @@ router.post(
     const {
       name,
       description,
-      image,
       originalPrice,
       discountPrice,
       sellingPrice,
