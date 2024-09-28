@@ -122,6 +122,25 @@ router.get("/customer/cart", auth("customer"), async (req, res) => {
   }
 });
 
+router.delete("/cart/remove/:productId", auth("customer"), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.product");
+
+    // Log the product ID from the request and current cart for debugging
+    console.log("Product ID to remove:", req.params.productId);
+    console.log("Current user cart:", user.cart);
+    user.cart = user.cart.filter((item) => {
+      return item._id.toString() !== req.params.productId;
+    });
+    console.log("user cart", user.cart);
+    await user.save();
+    res.json({ message: "Cart removed successfully", data: user.cart });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 // Checkout and Place Order with Cash Payment
 router.post("/customer/checkout", auth("customer"), async (req, res) => {
   try {

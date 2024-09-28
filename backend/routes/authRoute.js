@@ -60,4 +60,16 @@ router.get("/allUsers", auth("admin"), async (req, res) => {
   }
 });
 
+router.get("/admin/customers", auth("admin"), async (req, res) => {
+  try {
+    // Find all users with the role 'customer'
+    const customers = await User.find({ role: "customer" }).select("-password");
+
+    res.json(customers);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;
