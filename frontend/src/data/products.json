@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "name": "Product 1",
+    "description": "Description for product 1",
+    "image": "https://via.placeholder.com/150",
+    "originalPrice": 100,
+    "discountPrice": 80,
+    "sellingPrice": 90,
+    "quantity": 50,
+    "uom": "pcs",
+    "hsnCode": "123456"
+  },
+  {
+    "id": "2",
+    "name": "Product 2",
+    "description": "Description for product 2",
+    "image": "https://via.placeholder.com/150",
+    "originalPrice": 150,
+    "discountPrice": 130,
+    "sellingPrice": 140,
+    "quantity": 30,
+    "uom": "pcs",
+    "hsnCode": "789012"
+  }
+]
